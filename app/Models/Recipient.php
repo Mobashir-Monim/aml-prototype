@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Recipient extends Model
 {
     use HasFactory;
+    use Concerns\UsesUuid;
 
     protected $guarded = [];
 }
