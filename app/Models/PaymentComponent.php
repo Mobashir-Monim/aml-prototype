@@ -9,4 +9,6 @@ class PaymentComponent extends Model
 {
     use HasFactory;
     use Concerns\UsesUuid;
+
+    protected $guarded = [];
 }
