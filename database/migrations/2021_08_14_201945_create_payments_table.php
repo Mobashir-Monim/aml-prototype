@@ -22,7 +22,7 @@ class CreatePaymentsTable extends Migration
             $table->string('type');
             $table->string('identifier');
             $table->unsignedBigInteger('amount');
-            $table->text('remarks');
+            $table->text('remarks')->nullable();
             $table->date('status')->nullable();
             $table->timestamps();
         });
