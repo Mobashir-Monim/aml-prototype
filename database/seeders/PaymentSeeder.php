@@ -24,12 +24,17 @@ class PaymentSeeder extends Seeder
         $accounts = BankAccount::all();
         $types = ['cheque', 'rtgs', 'po', 'fund transfer'];
 
-        for ($i=0; $i < rand(300, 1000); $i++) { 
+        for ($i=0; $i < rand(800, 1000); $i++) {
+            $issued = Carbon::now()->subDays(rand(0, 100));
+            $status = rand(0,10) >= 3 ? $issued->addDays(rand(0,15)) : null;
+            if ($status > Carbon::now()) $status = null;
+
             Payment::create([
                 'recipient_id' => $this->getRandObj($recipients)->id,
                 'project_id' => $this->getRandObj($projects)->id,
                 'bank_account_id' => $this->getRandObj($accounts)->id,
-                'issue_date' => Carbon::now()->addDays(rand(-100, 0))->toDateString(),
+                'issue_date' => $issued->toDateString(),
+                'status' => $status,
                 'type' => $this->getRandObj($types),
                 'identifier' => Str::random(15),
                 'amount' => rand(10000, 100000000) * 100,
