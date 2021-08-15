@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [App\Http\Controllers\HomeController::class, 'dashboard']);
+Route::get('/transaction', [App\Http\Controllers\HomeController::class, 'addTransaction'])->name('transaction.get');
+Route::post('/transaction', [App\Http\Controllers\HomeController::class, 'storeTransaction'])->name('transaction.post');
 
 Auth::routes();
 

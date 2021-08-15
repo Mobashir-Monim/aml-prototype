@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Payment;
+use App\Models\Recipient;
+use App\Models\Project;
+use App\Models\BankAccount;
 use Carbon\Carbon;
 
 class HomeController extends Controller
@@ -30,18 +33,18 @@ class HomeController extends Controller
 
     public function dashboard()
     {
-        $thirty = $this->getLastThirtyDaysCount();
-        $seven = $this->getLastSevenDaysCount();
-        
+        $days = is_null(request()->days) ? -30 : -1 * request()->days;
+        $nRecords = $this->getLastNDaysCount($days);
+
         return view('welcome', [
-            'thirty' => $thirty,
-            'seven' => $seven
+            'nRecords' => $nRecords,
+            'days' => $days
         ]);
     }
 
-    public function getLastThirtyDaysCount()
+    public function getLastNDaysCount($days)
     {
-        $now = Carbon::now()->addDays(-30);
+        $now = Carbon::now()->addDays($days);
         $payments = Payment::select('issue_date', 'amount', 'status')->where('issue_date', '>=', $now)->where('issue_date', '<=', Carbon::now())->get();
         $temp = [];
 
@@ -55,33 +58,34 @@ class HomeController extends Controller
 
         ksort($temp);
 
-        return $temp;
+        return array_map(array($this, "avgTransactionAmount"), $temp);
     }
 
-    public function getLastSevenDaysCount()
+    function avgTransactionAmount($x)
     {
-        $now = Carbon::now()->addDays(-7);
-        $payments = Payment::select('issue_date', 'amount', 'status')->where('issue_date', '>=', $now)->where('issue_date', '<=', Carbon::now())->get();
-        $temp = [];
+        $x['avg'] = round($x['sum'] / $x['count']);
 
-        foreach ($payments as $payment) {
-            if (!array_key_exists($payment->issue_date, $temp))
-                $temp[$payment->issue_date] = ['count' => 0, 'sum' => 0];
-
-            $temp[$payment->issue_date]['count'] += 1;
-            $temp[$payment->issue_date]['sum'] += $payment->amount;
-        }
-
-        ksort($temp);
-
-        return $temp;
+        return $x;
     }
 
-    function compare_func($a, $b)
+    public function addTransaction()
     {
-        $t1 = strtotime($a);
-        $t2 = strtotime($b);
+        return view('transaction');
+    }
 
-        return ($t2 - $t1);
+    public function storeTransaction(Request $request)
+    {
+        Payment::create([
+            'recipient_id' => Recipient::where('name', $request->recipient)->first()->id,
+            'project_id' => Project::where('name', $request->project)->first()->id,
+            'bank_account_id' => BankAccount::where('bank', explode(" - ", $request->account)[0])->where('account', explode(" - ", $request->account)[1])->first()->id,
+            'issue_date' => Carbon::now()->toDateString(),
+            'type' => $request->type,
+            'identifier' => $request->identifier,
+            'amount' => $request->amount,
+            'remarks' => $request->remarks
+        ]);
+
+        return redirect()->route('transaction.get');
     }
 }
